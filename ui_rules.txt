@@ -1,0 +1,42 @@
+1. DESIGN PHILOSOPHY
+Visual: "Furnace Control Room" — the UI draws from the visual language of a mid-century industrial control panel: dark surfaces, high-contrast readouts, and color used functionally rather than decoratively. These instruments lived at the edge of what materials could withstand — the app should carry that intensity without theatrical fire effects. Think the design sensibility of a modern industrial monitoring dashboard or a premium metallurgy equipment brand: dark, precise, temperature-coded, and completely serious.
+Mood: intense, industrial, heat-aware, foundry-serious, controlled power.
+Important: No flame animations, no molten metal gradients, no glowing ember effects. The pyrometer was a precision scientific instrument that happened to measure extreme heat — the UI should reflect the precision, not the heat. The drama belongs to the objects in the collection, not the interface that catalogs them.
+
+2. COLORS
+#111010 — Main background (furnace black — the darkest background in the series, darker even than the Morse Sounder. The inside of a blast furnace at cold idle.)
+#F0EDE8 — Primary text & high-contrast elements (refractory white — warm, slightly cream, like firebrick face)
+#1A1918 — Secondary panels / card surfaces
+#6A6560 — Secondary text / muted labels (slag grey, warm and dark)
+#E8622A — Primary accent (forge orange — the precise color of iron at 900°C, the first visible glow of a heating furnace, the color every pyrometer operator was trained to recognize. Not red, not yellow — the specific orange of controlled heat)
+#2A2826 — Outline / stroke / dividers (dark furnace rule lines)
+#C4920A — Secondary accent (crucible gold — the color of molten brass at pouring temperature, used for temperature range badges, era tags, and material indicators)
+#DC2626 — Critical errors only
+Important: Forge orange is the most viscerally distinctive accent in the entire series — it should feel like heat made visible, but rendered with precision, not spectacle. Crucible gold is informational only — temperature ranges, material type, era. This is the only fully dark-background app in the series where the darkness is semantic, not aesthetic: the furnace is off. The instruments wait in the dark for the heat to come.
+
+3. TYPOGRAPHY
+Display / Headings: Bebas Neue — the typeface of industrial signage, foundry safety placards, and steel mill warning boards. Tall, condensed, all-caps by design. At large sizes it reads like it was stenciled onto a cast-iron housing or stamped into a metal spec plate. Used for instrument names, section headers, and the app title. The most industrial display choice in the series.
+Body / Descriptions: IBM Plex Sans (weight 300–400, in #F0EDE8) — engineered, neutral, readable on dark. For condition notes, foundry history, and all prose fields. Light weight on dark background reads with refinement.
+Monospace / Identifiers: IBM Plex Mono — for archive codes like PYF-LAND-OPTICAL-1908-GBR-SHEFFIELD-STEEL-014, temperature ranges (600–1400°C), thermocouple types (Type K, Chromel-Alumel), and all structured technical fields.
+Important: Bebas Neue is all-caps by nature — lean into it for headers and instrument names, but never use it for body copy or labels below 18px. IBM Plex Sans carries the reading weight on dark surfaces — its light weight at 300 is specifically chosen to prevent the text from feeling heavy against the near-black background.
+
+4. SURFACE & TEXTURE LANGUAGE
+
+Backgrounds: flat furnace black — no grain, no noise, no glow effects whatsoever
+Cards: #1A1918 surface with a 1px border at #2A2826 and 10px corner radius — dark instrument housings in a dark case
+Temperature gradient arc motif: each list card features a small SVG — a semicircular arc representing the instrument's temperature range, graduated from deep red at the low end through forge orange at mid-range to crucible gold at the high end. A small marker dot sits at the instrument's rated maximum. High-range instruments (optical pyrometers rated to 1600°C+) show a full arc reaching into gold; low-range instruments (expansion pyrometers to 500°C) show a short arc in deep red only. This is the most visually expressive motif in the series — temperature as color gradient, data as heat.
+Temperature range badge: each card shows the rated range in IBM Plex Mono — 0–1200°C, 600–1800°C — in a small dark-bordered pill in crucible gold text. The single most important specification.
+Photography: instrument photography on near-black — the optical head, expansion rod, or thermocouple assembly forward. Forge orange or gold light sources allowed in photography styling — this is the one app where specimen lighting can be dramatic.
+Foundry provenance tag: small pill showing the originating mill or kiln — Sheffield Steel, Pittsburgh Carnegie, Wedgwood Potteries, Krupp Essen — in forge orange at 15% opacity fill with full orange text
+
+
+5. INTERACTION PRINCIPLES
+
+Transitions: 180–220ms ease-out — controlled and direct, like a pyrometer needle responding to radiant heat
+Selected state: forge orange left-border (3px) + very faint #1E1410 background tint on active cards
+Empty states: NO INSTRUMENTS IN THIS FORGE. in IBM Plex Mono, centered, slag grey — one line
+Loading: a thin forge orange progress bar at screen top — immediate, no spinner, no skeleton
+Navigation: bottom tab bar on dark surface — four tabs: Forge, Foundry Map, Logbook, Settings. Active tab in forge orange. Tab bar background #1A1918, border top #2A2826.
+Temperature range filter: a first-class filter chip row — Low heat (0–500°C), Medium (500–1000°C), High (1000–1400°C), Extreme (1400°C+) — because operating temperature range is the primary axis of comparison for pyrometer collectors and determines which industrial process the instrument was designed for
+
+Important: The temperature gradient arc on each card is the most expressive motif in the series — it encodes two dimensions of data simultaneously (range breadth and maximum rating) through arc length and color position. A full arc reaching gold means an extreme-range optical pyrometer — rare and prized. A short red arc means a modest expansion type — common and robust. This visual grammar should be learnable in one scroll through the list view, without reading a single label.
