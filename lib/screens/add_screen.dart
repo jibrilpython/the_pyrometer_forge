@@ -86,11 +86,11 @@ class _AddScreenState extends ConsumerState<AddScreen> {
 
   void _save() async {
     final p = ref.read(inputProvider);
-    if (p.makerSign == MakerSign.other && p.makerCustom.trim().isEmpty) {
+    if (p.thermalRegistryHash.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Please specify a maker or select one from the list.',
+            'Thermal Registry Hash is required to archive.',
             style: GoogleFonts.ibmPlexSans(
               color: Colors.white,
               fontWeight: FontWeight.w500,
@@ -272,24 +272,12 @@ class _AddScreenState extends ConsumerState<AddScreen> {
             color: (v) => getClassificationColor(v),
           ),
           SizedBox(height: 20.h),
-          _subLabel('MAKER SIGN & FOUNDRY STAMP'),
-          SizedBox(height: 8.h),
-          _enumChips<MakerSign>(
-            values: MakerSign.values,
-            current: p.makerSign,
-            onSelected: (v) => ref.read(inputProvider).makerSign = v,
-            label: (v) => v.label,
-            color: (v) => getMakerColor(v),
+          _field(
+            label: 'CUSTOM MAKER NAME',
+            ctrl: _makerCustomCtrl,
+            hint: 'e.g. Custom Instrument Works',
+            onChanged: (v) => p.makerCustom = v,
           ),
-          if (p.makerSign == MakerSign.other) ...[
-            SizedBox(height: 10.h),
-            _field(
-              label: 'CUSTOM MAKER NAME',
-              ctrl: _makerCustomCtrl,
-              hint: 'e.g. Custom Instrument Works',
-              onChanged: (v) => p.makerCustom = v,
-            ),
-          ],
         ],
       ),
     );
@@ -491,25 +479,12 @@ class _AddScreenState extends ConsumerState<AddScreen> {
         children: [
           _sectionHeader('04 — ARCHIVAL RECORD', Icons.history_edu),
           SizedBox(height: 16.h),
-          _subLabel('SMELTING & FOUNDRY PROVENANCE'),
-          SizedBox(height: 8.h),
-          _enumChips<FoundryProvenance>(
-            values: FoundryProvenance.values,
-            current: p.foundryProvenance,
-            onSelected: (v) =>
-                ref.read(inputProvider).foundryProvenance = v,
-            label: (v) => v.label,
-            color: (_) => kAccent,
+          _field(
+            label: 'CUSTOM FOUNDRY PROVENANCE',
+            ctrl: _provenanceCustomCtrl,
+            hint: 'e.g. Abandoned steel mill, Ohio',
+            onChanged: (v) => p.foundryProvenanceCustom = v,
           ),
-          if (p.foundryProvenance == FoundryProvenance.other) ...[
-            SizedBox(height: 10.h),
-            _field(
-              label: 'CUSTOM PROVENANCE',
-              ctrl: _provenanceCustomCtrl,
-              hint: 'e.g. Abandoned steel mill, Ohio',
-              onChanged: (v) => p.foundryProvenanceCustom = v,
-            ),
-          ],
           SizedBox(height: 20.h),
           _field(
             label: 'ARCHIVAL NOTES',
@@ -618,8 +593,7 @@ class _AddScreenState extends ConsumerState<AddScreen> {
     final p = ref.watch(inputProvider);
     final isLastPage = _currentPage == _pageTitles.length - 1;
 
-    final isIdentityValid = p.thermalRegistryHash.trim().isNotEmpty &&
-        (p.makerSign != MakerSign.other || p.makerCustom.trim().isNotEmpty);
+    final isIdentityValid = p.thermalRegistryHash.trim().isNotEmpty;
     final canProceed = isLastPage || _currentPage != 0 || isIdentityValid;
     final useAccent = _currentPage == 0 ? isIdentityValid : true;
 

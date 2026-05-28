@@ -49,9 +49,11 @@ class ProjectNotifier extends ChangeNotifier {
   }
 
   String _generateHash(
-      MakerSign maker, PyrometricClassification classification,
+      MakerSign maker, String makerCustom, PyrometricClassification classification,
       [String? suffix]) {
-    final makerCode = maker.name.substring(0, 2).toUpperCase();
+    final makerCode = maker == MakerSign.other && makerCustom.isNotEmpty
+        ? makerCustom.substring(0, 2).toUpperCase()
+        : maker.name.substring(0, 2).toUpperCase();
     final classCode = classification.name;
     final year = DateTime.now().year.toString();
     final rand = suffix ?? _uuid.v4().substring(0, 4).toUpperCase();
@@ -67,7 +69,7 @@ class ProjectNotifier extends ChangeNotifier {
         id: _uuid.v4(),
         thermalRegistryHash: p.thermalRegistryHash.isNotEmpty
             ? p.thermalRegistryHash
-            : _generateHash(p.makerSign, p.pyrometricClassification),
+            : _generateHash(p.makerSign, p.makerCustom, p.pyrometricClassification),
         pyrometricClassification: p.pyrometricClassification,
         makerSign: p.makerSign,
         makerCustom: p.makerCustom,

@@ -57,31 +57,12 @@ class InitialScreen extends ConsumerWidget {
                       ),
                       SizedBox(width: 12.w),
                       Text(
-                        'THERMAL ARCHIVE',
+                        'THERMAL TRACE',
                         style: GoogleFonts.ibmPlexMono(
                           fontSize: 11.sp,
                           color: kAccent,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 1.5,
-                        ),
-                      ),
-                      const Spacer(),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 8.w,
-                          vertical: 4.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: kAccent.withAlpha(20),
-                          borderRadius: BorderRadius.circular(4.r),
-                        ),
-                        child: Text(
-                          'TPF',
-                          style: GoogleFonts.ibmPlexMono(
-                            fontSize: 8.sp,
-                            color: kAccent,
-                            fontWeight: FontWeight.w800,
-                          ),
                         ),
                       ),
                     ],

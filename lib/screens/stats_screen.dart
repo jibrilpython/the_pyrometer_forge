@@ -29,8 +29,8 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
 
     final classCounts = <PyrometricClassification, int>{};
     final bandCounts = <TemperatureBand, int>{};
-    final makerCounts = <MakerSign, int>{};
-    final makerSet = <MakerSign>{};
+    final makerCounts = <String, int>{};
+    final makerSet = <String>{};
     int minTempGlobal = entries.first.minTemperature;
     int maxTempGlobal = entries.first.maxTemperature;
     DateTime earliest = entries.first.dateAdded;
@@ -42,8 +42,8 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
           (classCounts[e.pyrometricClassification] ?? 0) + 1;
       final band = bandForTemperature(e.maxTemperature);
       bandCounts[band] = (bandCounts[band] ?? 0) + 1;
-      makerCounts[e.makerSign] = (makerCounts[e.makerSign] ?? 0) + 1;
-      makerSet.add(e.makerSign);
+      makerCounts[e.makerDisplay] = (makerCounts[e.makerDisplay] ?? 0) + 1;
+      makerSet.add(e.makerDisplay);
       if (e.minTemperature < minTempGlobal) minTempGlobal = e.minTemperature;
       if (e.maxTemperature > maxTempGlobal) maxTempGlobal = e.maxTemperature;
       if (e.dateAdded.isBefore(earliest)) earliest = e.dateAdded;
@@ -435,10 +435,10 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
           final frac = total > 0 ? e.value / total : 0.0;
           final color = isClass
               ? getClassificationColor(e.key)
-              : getMakerColor(e.key);
+              : kAccent;
           final label = isClass
               ? (e.key as PyrometricClassification).label
-              : (e.key as MakerSign).label;
+              : (e.key as String);
           final isExpanded = _expandedLabel == label;
           return GestureDetector(
             onTap: () {

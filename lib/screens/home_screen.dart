@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'dart:math' as math;
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -53,48 +55,90 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return Scaffold(
       backgroundColor: kBackground,
-      body: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(
-          parent: BouncingScrollPhysics(),
-        ),
-        slivers: [
-          _buildHeaderSliver(allEntries.length),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20.w),
-              child: Column(
-                children: [
-                  _buildSearchBar(),
-                  SizedBox(height: kSpacingM.h),
-                  _buildBandFilterChips(),
-                  SizedBox(height: 20.h),
+      body: Stack(
+        children: [
+          // Background ambient glow
+          Positioned(
+            top: -100.h,
+            right: -50.w,
+            child: Container(
+              width: 250.w,
+              height: 250.w,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: kAccent.withAlpha(25),
+                    blurRadius: 100,
+                    spreadRadius: 50,
+                  ),
                 ],
               ),
             ),
           ),
-          entries.isEmpty
-              ? SliverToBoxAdapter(child: _buildEmptyState())
-              : SliverPadding(
-                  padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 140.h),
-                  sliver: SliverMasonryGrid.count(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 12.w,
-                    crossAxisSpacing: 12.w,
-                    itemBuilder: (context, index) {
-                      final entry = entries[index];
-                      final mainIndex = ref
-                          .read(projectProvider)
-                          .entries
-                          .indexWhere((e) => e.id == entry.id);
-                      return _buildInstrumentCard(context, entry, mainIndex);
-                    },
-                    childCount: entries.length,
+
+          CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
+            ),
+            slivers: [
+              _buildHeaderSliver(allEntries.length),
+
+              // Search and filters sticky header
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: _SliverAppBarDelegate(
+                  minHeight: 110.h,
+                  maxHeight: 110.h,
+                  child: ClipRRect(
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                      child: Container(
+                        color: kBackground.withAlpha(210),
+                        padding: EdgeInsets.symmetric(horizontal: 20.w),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _buildSearchBar(),
+                            SizedBox(height: 16.h),
+                            _buildBandFilterChips(),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                 ),
+              ),
+
+              entries.isEmpty
+                  ? SliverToBoxAdapter(child: _buildEmptyState())
+                  : SliverPadding(
+                      padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 140.h),
+                      sliver: SliverMasonryGrid.count(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 16.w,
+                        crossAxisSpacing: 16.w,
+                        itemBuilder: (context, index) {
+                          final entry = entries[index];
+                          final mainIndex = ref
+                              .read(projectProvider)
+                              .entries
+                              .indexWhere((e) => e.id == entry.id);
+                          return _buildInstrumentCard(
+                            context,
+                            entry,
+                            mainIndex,
+                          );
+                        },
+                        childCount: entries.length,
+                      ),
+                    ),
+            ],
+          ),
         ],
       ),
       floatingActionButton: Padding(
-        padding: EdgeInsets.only(bottom: 90.h),
+        padding: EdgeInsets.only(bottom: 100.h),
         child: GestureDetector(
           onTap: () {
             ref.read(inputProvider).clearAll();
@@ -102,31 +146,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Navigator.pushNamed(context, '/add_screen');
           },
           child: Container(
-            height: 52.h,
-            padding: EdgeInsets.symmetric(horizontal: 20.w),
+            width: 60.w,
+            height: 60.w,
             decoration: BoxDecoration(
               color: kAccent,
-              borderRadius: BorderRadius.circular(kRadiusPill),
-              boxShadow: const [kShadowOrange],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.add, color: kPrimaryText, size: 20.sp),
-                SizedBox(width: 8.w),
-                Text(
-                  'Log Instrument',
-                  style: GoogleFonts.ibmPlexSans(
-                    color: kPrimaryText,
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                  ),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: kAccent.withAlpha(100),
+                  blurRadius: 24,
+                  spreadRadius: 4,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
+            child: Icon(Icons.add, color: kPrimaryText, size: 30.sp),
           ),
         ),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
     );
   }
 
@@ -134,101 +172,67 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final topPadding = MediaQuery.paddingOf(context).top;
     return SliverToBoxAdapter(
       child: Padding(
-        padding: EdgeInsets.fromLTRB(20.w, topPadding, 20.w, kSpacingM.h),
+        padding: EdgeInsets.fromLTRB(20.w, topPadding + 20.h, 20.w, 12.h),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _PulsingDot(),
-                SizedBox(width: 8.w),
                 Text(
                   'THERMAL ARCHIVE',
                   style: GoogleFonts.ibmPlexMono(
-                    color: kAccent,
-                    fontSize: 8.sp,
-                    fontWeight: FontWeight.w700,
+                    color: kSecondaryText,
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w600,
                     letterSpacing: 2.0,
+                  ),
+                ),
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 4.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: kAccent.withAlpha(20),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: kAccent.withAlpha(50)),
+                  ),
+                  child: Text(
+                    '$count ${count == 1 ? "INSTRUMENT" : "INSTRUMENTS"}',
+                    style: GoogleFonts.ibmPlexMono(
+                      color: kAccent,
+                      fontSize: 9.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
             ),
-            SizedBox(height: 12.h),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'THE',
-                      style: GoogleFonts.bebasNeue(
-                        color: kAccent,
-                        fontSize: 20.sp,
-                        letterSpacing: 4.0,
-                        height: 1.0,
-                      ),
-                    ),
-                    Text(
-                      'PYROMETER\nFORGE',
-                      style: GoogleFonts.bebasNeue(
-                        color: kPrimaryText,
-                        fontSize: 44.sp,
-                        fontWeight: FontWeight.w400,
-                        height: 0.88,
-                        letterSpacing: 1.5,
-                      ),
-                    ),
-                  ],
-                ),
-                const Spacer(),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    TweenAnimationBuilder<double>(
-                      duration: const Duration(milliseconds: 1200),
-                      curve: Curves.easeOutExpo,
-                      tween: Tween(begin: 0, end: count.toDouble()),
-                      builder: (_, val, _) => Text(
-                        val.toInt().toString().padLeft(2, '0'),
-                        style: GoogleFonts.ibmPlexMono(
-                          color: kAccent,
-                          fontSize: 42.sp,
-                          fontWeight: FontWeight.w800,
-                          height: 1.0,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      'INSTRUMENTS',
-                      style: GoogleFonts.ibmPlexMono(
-                        color: kSecondaryText,
-                        fontSize: 7.sp,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 1.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+            SizedBox(height: 16.h),
+            Text(
+              'THE PYROMETER FORGE',
+              style: GoogleFonts.bebasNeue(
+                color: kPrimaryText,
+                fontSize: 42.sp,
+                fontWeight: FontWeight.w400,
+                height: 1.0,
+                letterSpacing: 1.5,
+              ),
             ),
-            SizedBox(height: kSpacingM.h),
+            SizedBox(height: 20.h),
             Container(
-              height: 3.h,
+              height: 2.h,
+              width: 60.w,
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [
-                    Color(0xFF8B1A1A),
-                    Color(0xFFE8622A),
-                    Color(0xFFC4920A),
-                    Color(0xFFFFF3CC),
-                  ],
-                  stops: [0.0, 0.35, 0.70, 1.0],
-                ),
-                borderRadius: BorderRadius.circular(kRadiusPill),
+                color: kAccent,
+                boxShadow: [
+                  BoxShadow(
+                    color: kAccent.withAlpha(150),
+                    blurRadius: 8,
+                    spreadRadius: 1,
+                  ),
+                ],
               ),
             ),
           ],
@@ -239,63 +243,146 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Widget _buildSearchBar() {
     final isFocused = _searchFocusNode.hasFocus;
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      height: 50.h,
+    final hasText = _searchController.text.isNotEmpty;
+
+    return Container(
+      height: 54.h,
       decoration: BoxDecoration(
         color: kPanelBg,
-        borderRadius: BorderRadius.circular(kRadiusSubtle),
-        border: Border.all(
-          color: isFocused ? kAccent : kOutline,
-          width: isFocused ? 1.5 : 1.0,
-        ),
-        boxShadow: const [kShadowSubtle],
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: kOutline.withAlpha(80), width: 1.0),
       ),
+      clipBehavior: Clip.antiAlias,
       child: Row(
         children: [
-          SizedBox(width: 14.w),
-          Icon(
-            Icons.search,
-            color: isFocused ? kAccent : kSecondaryText,
-            size: 18.sp,
-          ),
-          SizedBox(width: 10.w),
-          Expanded(
-            child: TextField(
-              controller: _searchController,
-              focusNode: _searchFocusNode,
-              onChanged: (v) =>
-                  ref.read(searchProvider.notifier).setSearchQuery(v),
-              style: GoogleFonts.ibmPlexSans(
-                color: kPrimaryText,
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w300,
-              ),
-              decoration: InputDecoration(
-                hintText: 'Search makers, hashes, provenance…',
-                hintStyle: GoogleFonts.ibmPlexSans(
-                  color: kSecondaryText.withAlpha(120),
-                  fontSize: 14.sp,
-                ),
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                filled: false,
-                isDense: true,
-                contentPadding: EdgeInsets.zero,
+          // ── Left accent strip (animated temperature-gradient bar) ──
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeOutCubic,
+            width: 3.w,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: isFocused
+                    ? [const Color(0xFF8B1A1A), kAccent, kGold]
+                    : [kOutline, kOutline, kOutline],
               ),
             ),
           ),
-          if (_searchController.text.isNotEmpty)
+
+          // ── SEARCH label tab (collapses on focus / has text) ──────
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
+            width: isFocused || hasText ? 0 : 72.w,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              border: Border(
+                right: BorderSide(
+                  color: isFocused || hasText
+                      ? Colors.transparent
+                      : kOutline.withAlpha(80),
+                  width: 1.0,
+                ),
+              ),
+            ),
+            child: AnimatedOpacity(
+              opacity: isFocused || hasText ? 0.0 : 1.0,
+              duration: const Duration(milliseconds: 150),
+              child: Text(
+                'SEARCH',
+                style: GoogleFonts.ibmPlexMono(
+                  color: kSecondaryText,
+                  fontSize: 10.sp,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 2.0,
+                ),
+              ),
+            ),
+          ),
+
+          // ── Text input ──────────────────────────────────────────────
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 14.w),
+              child: TextField(
+                controller: _searchController,
+                focusNode: _searchFocusNode,
+                onChanged: (v) =>
+                    ref.read(searchProvider.notifier).setSearchQuery(v),
+                style: GoogleFonts.ibmPlexMono(
+                  color: kPrimaryText,
+                  fontSize: 13.sp,
+                  letterSpacing: 0.8,
+                ),
+                decoration: InputDecoration(
+                  hintText: isFocused
+                      ? 'maker · hash · provenance...'
+                      : 'Search archive...',
+                  hintStyle: GoogleFonts.ibmPlexMono(
+                    color: kSecondaryText.withAlpha(100),
+                    fontSize: 13.sp,
+                    letterSpacing: 0.8,
+                  ),
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  isDense: true,
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+            ),
+          ),
+
+          // ── CLEAR action zone (shown when typing) ────────────────────
+          if (hasText)
             GestureDetector(
               onTap: () {
                 _searchController.clear();
                 ref.read(searchProvider.notifier).clearSearchQuery();
                 setState(() {});
               },
-              child: Padding(
+              child: Container(
+                height: double.infinity,
                 padding: EdgeInsets.symmetric(horizontal: 14.w),
-                child: Icon(Icons.close, color: kSecondaryText, size: 16.sp),
+                decoration: BoxDecoration(
+                  border: Border(
+                    left: BorderSide(color: kOutline.withAlpha(80), width: 1.0),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.close, color: kSecondaryText, size: 14.sp),
+                    SizedBox(width: 5.w),
+                    Text(
+                      'CLEAR',
+                      style: GoogleFonts.ibmPlexMono(
+                        color: kSecondaryText,
+                        fontSize: 9.sp,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            // ── Search icon zone (idle) ─────────────────────────────
+            Container(
+              height: double.infinity,
+              padding: EdgeInsets.symmetric(horizontal: 14.w),
+              decoration: BoxDecoration(
+                border: Border(
+                  left: BorderSide(color: kOutline.withAlpha(80), width: 1.0),
+                ),
+              ),
+              child: Icon(
+                Icons.search,
+                color: isFocused ? kAccent : kSecondaryText.withAlpha(120),
+                size: 18.sp,
               ),
             ),
         ],
@@ -305,7 +392,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Widget _buildBandFilterChips() {
     return SizedBox(
-      height: 36.h,
+      height: 32.h,
       child: ListView(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
@@ -324,21 +411,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       onTap: () => setState(() => _selectedBandFilter = band),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        curve: Curves.easeOutCubic,
-        margin: EdgeInsets.only(right: 8.w),
-        padding: EdgeInsets.symmetric(horizontal: 14.w),
+        margin: EdgeInsets.only(right: 16.w),
+        padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 4.h),
         decoration: BoxDecoration(
-          color: isSelected ? kAccent : kPanelBg,
-          borderRadius: BorderRadius.circular(kRadiusPill),
-          border: Border.all(color: isSelected ? kAccent : kOutline, width: 1),
+          border: Border(
+            bottom: BorderSide(
+              color: isSelected ? kAccent : Colors.transparent,
+              width: 2.0,
+            ),
+          ),
         ),
         alignment: Alignment.center,
         child: Text(
           label,
           style: GoogleFonts.ibmPlexMono(
             color: isSelected ? kPrimaryText : kSecondaryText,
-            fontSize: 10.sp,
-            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            fontSize: 11.sp,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+            letterSpacing: 0.5,
           ),
         ),
       ),
@@ -355,40 +445,49 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final band = bandForTemperature(entry.maxTemperature);
     final bandColor = classificationColor(band);
 
+    final hasImage =
+        entry.photoPath.isNotEmpty &&
+        imagePath != null &&
+        File(imagePath).existsSync();
+
     return GestureDetector(
       onTap: () => Navigator.pushNamed(
         context,
         '/info_screen',
         arguments: {'index': index},
       ),
-      child: SizedBox(
+      child: Container(
+        decoration: BoxDecoration(
+          color: kPanelBg,
+          borderRadius: BorderRadius.circular(16.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha(40),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
         child: Stack(
           children: [
-            Container(
-              decoration: BoxDecoration(
-                color: kPanelBg,
-                borderRadius: BorderRadius.circular(kRadiusSubtle),
-                boxShadow: const [kShadowSubtle],
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Top: Image or temperature arc
-            Stack(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // Image / Arc section
                 AspectRatio(
-                  aspectRatio: 1.1,
-                  child:
-                      (entry.photoPath.isNotEmpty &&
-                          imagePath != null &&
-                          File(imagePath).existsSync())
-                      ? Image.file(File(imagePath), fit: BoxFit.cover)
-                      : Container(
-                          color: kBackground,
+                  aspectRatio: 1.0,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      if (hasImage)
+                        Image.file(File(imagePath), fit: BoxFit.cover)
+                      else
+                        Container(
+                          color: kBackground.withAlpha(100),
                           child: Center(
                             child: CustomPaint(
-                              size: Size(64.w, 64.w),
+                              size: Size(80.w, 80.w),
                               painter: _TempArcPainter(
                                 minTemp: entry.minTemperature,
                                 maxTemp: entry.maxTemperature,
@@ -396,186 +495,190 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             ),
                           ),
                         ),
-                ),
-                Positioned(
-                  top: 10.w,
-                  right: 10.w,
-                  child: Container(
-                    width: 8.w,
-                    height: 8.w,
-                    decoration: BoxDecoration(
-                      color: bandColor,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: bandColor.withAlpha(80),
-                          blurRadius: 6,
+                      // Gradient overlay for better blend with card details
+                      Positioned(
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        height: 40.h,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.bottomCenter,
+                              end: Alignment.topCenter,
+                              colors: [kPanelBg, kPanelBg.withAlpha(0)],
+                            ),
+                          ),
                         ),
-                      ],
-                    ),
+                      ),
+                      // Top Right Band Color Dot
+                      Positioned(
+                        top: 10.w,
+                        right: 10.w,
+                        child: Container(
+                          width: 8.w,
+                          height: 8.w,
+                          decoration: BoxDecoration(
+                            color: bandColor,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: bandColor.withAlpha(150),
+                                blurRadius: 8,
+                                spreadRadius: 2,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-            // Content
-            Padding(
-              padding: EdgeInsets.all(12.w),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    entry.thermalRegistryHash.isNotEmpty
-                        ? entry.thermalRegistryHash
-                        : 'NO-HASH',
-                    style: GoogleFonts.ibmPlexMono(
-                      color: kAccent,
-                      fontSize: 7.sp,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.5,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  SizedBox(height: 4.h),
-                  Text(
-                    entry.makerDisplay,
-                    style: GoogleFonts.bebasNeue(
-                      color: kPrimaryText,
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.w400,
-                      height: 1.1,
-                      letterSpacing: 0.3,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  SizedBox(height: 4.h),
-                  Text(
-                    entry.pyrometricClassification.label,
-                    style: GoogleFonts.ibmPlexSans(
-                      color: kSecondaryText,
-                      fontSize: 11.sp,
-                      fontWeight: FontWeight.w300,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  SizedBox(height: 8.h),
-                  // Temperature range pill
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 8.w,
-                      vertical: 3.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: kGoldSurface,
-                      borderRadius: BorderRadius.circular(kRadiusPill),
-                      border: Border.all(color: kGold.withAlpha(40), width: 1),
-                    ),
-                    child: Text(
-                      '${entry.minTemperature}${entry.temperatureUnit} – ${entry.maxTemperature}${entry.temperatureUnit}',
-                      style: GoogleFonts.ibmPlexMono(
-                        color: kGold,
-                        fontSize: 8.sp,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  SizedBox(height: 6.h),
-                  if (entry.provenanceDisplay.isNotEmpty &&
-                      entry.foundryProvenance != FoundryProvenance.other)
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 6.w,
-                        vertical: 2.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color: kAccent.withAlpha(25),
-                        borderRadius: BorderRadius.circular(kRadiusPill),
-                      ),
-                      child: Text(
-                        entry.provenanceDisplay,
-                        style: GoogleFonts.ibmPlexMono(
-                          color: kAccent.withAlpha(200),
-                          fontSize: 7.sp,
-                          fontWeight: FontWeight.w600,
+
+                // Card Details
+                Padding(
+                  padding: EdgeInsets.all(12.w),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        entry.makerDisplay,
+                        style: GoogleFonts.bebasNeue(
+                          color: kPrimaryText,
+                          fontSize: 18.sp,
+                          letterSpacing: 0.5,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                ],
+                      SizedBox(height: 4.h),
+                      Text(
+                        entry.pyrometricClassification.label,
+                        style: GoogleFonts.ibmPlexSans(
+                          color: kSecondaryText,
+                          fontSize: 10.sp,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      SizedBox(height: 8.h),
+                      Row(
+                        children: [
+                          Icon(Icons.thermostat, size: 12.sp, color: kGold),
+                          SizedBox(width: 4.w),
+                          Expanded(
+                            child: Text(
+                              '${entry.minTemperature} – ${entry.maxTemperature}${entry.temperatureUnit}',
+                              style: GoogleFonts.ibmPlexMono(
+                                color: kGold,
+                                fontSize: 9.sp,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            // Border overlay on top of children
+            Positioned.fill(
+              child: IgnorePointer(
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16.r),
+                    border: Border.all(color: kOutline.withAlpha(150), width: 1),
+                  ),
+                ),
               ),
             ),
           ],
         ),
       ),
-      Positioned.fill(
-        child: IgnorePointer(
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(kRadiusSubtle),
-              border: Border.all(color: kOutline, width: 1),
-            ),
-          ),
-        ),
-      ),
-    ],
-  ),
-),
-);
+    );
   }
 
   Widget _buildEmptyState() {
     return Padding(
-      padding: EdgeInsets.fromLTRB(20.w, 24.h, 20.w, 0),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.symmetric(vertical: 52.h, horizontal: 24.w),
-            decoration: BoxDecoration(
-              color: kPanelBg,
-              borderRadius: BorderRadius.circular(kRadiusSubtle),
-              border: Border.all(color: kOutline, width: 1),
+      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 40.h),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: EdgeInsets.all(24.w),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: kPanelBg,
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withAlpha(20), blurRadius: 20),
+                ],
+              ),
+              child: Icon(
+                Icons.local_fire_department_outlined,
+                size: 48.sp,
+                color: kSecondaryText.withAlpha(150),
+              ),
             ),
-            child: Column(
-              children: [
-                Icon(
-                  Icons.local_fire_department_outlined,
-                  size: 56.sp,
-                  color: kOutline,
-                ),
-                SizedBox(height: 20.h),
-                Text(
-                  'NO INSTRUMENTS IN THIS FORGE.',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.ibmPlexMono(
-                    color: kSecondaryText,
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                SizedBox(height: 8.h),
-                Text(
-                  'Tap "Log Instrument" to begin cataloging your collection of vintage pyrometers and thermal measurement devices.',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.ibmPlexSans(
-                    color: kSecondaryText.withAlpha(160),
-                    fontSize: 13.sp,
-                    height: 1.5,
-                  ),
-                ),
-              ],
+            SizedBox(height: 24.h),
+            Text(
+              'NO INSTRUMENTS FOUND',
+              style: GoogleFonts.ibmPlexMono(
+                color: kSecondaryText,
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 1.0,
+              ),
             ),
-          ),
-        ],
+            SizedBox(height: 12.h),
+            Text(
+              'Begin cataloging your vintage pyrometers.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.ibmPlexSans(
+                color: kSecondaryText.withAlpha(160),
+                fontSize: 13.sp,
+              ),
+            ),
+          ],
+        ),
       ),
     );
+  }
+}
+
+class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
+  final double minHeight;
+  final double maxHeight;
+  final Widget child;
+
+  _SliverAppBarDelegate({
+    required this.minHeight,
+    required this.maxHeight,
+    required this.child,
+  });
+
+  @override
+  double get minExtent => minHeight;
+  @override
+  double get maxExtent => math.max(maxHeight, minHeight);
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return SizedBox.expand(child: child);
+  }
+
+  @override
+  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
+    return maxHeight != oldDelegate.maxHeight ||
+        minHeight != oldDelegate.minHeight ||
+        child != oldDelegate.child;
   }
 }
 
@@ -638,57 +741,4 @@ class _TempArcPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _TempArcPainter old) =>
       old.minTemp != minTemp || old.maxTemp != maxTemp;
-}
-
-// ─── Pulsing status dot ──────────────────────────────────────────────────────
-class _PulsingDot extends StatefulWidget {
-  @override
-  State<_PulsingDot> createState() => _PulsingDotState();
-}
-
-class _PulsingDotState extends State<_PulsingDot>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _ctrl;
-  late Animation<double> _anim;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1100),
-    )..repeat(reverse: true);
-    _anim = Tween<double>(
-      begin: 0.25,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _anim,
-      builder: (_, _) => Container(
-        width: 6.w,
-        height: 6.w,
-        decoration: BoxDecoration(
-          color: kAccent.withAlpha((_anim.value * 255).toInt()),
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: kAccent.withAlpha((_anim.value * 120).toInt()),
-              blurRadius: 6,
-              spreadRadius: 1,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
