@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -108,7 +109,7 @@ class _AddScreenState extends ConsumerState<AddScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const _SavingDialog(),
+      builder: (_) => const _ForgingDialog(),
     );
     await Future.delayed(const Duration(milliseconds: 900));
     if (widget.isEdit) {
@@ -824,8 +825,31 @@ class _AddScreenState extends ConsumerState<AddScreen> {
   }
 }
 
-class _SavingDialog extends StatelessWidget {
-  const _SavingDialog();
+class _ForgingDialog extends StatefulWidget {
+  const _ForgingDialog();
+  @override
+  State<_ForgingDialog> createState() => _ForgingDialogState();
+}
+
+class _ForgingDialogState extends State<_ForgingDialog>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Dialog(
@@ -840,26 +864,93 @@ class _SavingDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const CircularProgressIndicator(
-                color: kAccent, strokeWidth: 2.5),
+            SizedBox(
+              width: 100.w,
+              height: 100.w,
+              child: AnimatedBuilder(
+                animation: _ctrl,
+                builder: (context, child) => CustomPaint(
+                  painter: _ForgeHeartPainter(progress: _ctrl.value),
+                  child: Center(
+                    child: Text(
+                      '${(_ctrl.value * 1600).round()}°',
+                      style: GoogleFonts.ibmPlexMono(
+                        color: kPrimaryText,
+                        fontSize: 24.sp,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
             SizedBox(height: 20.h),
             Text(
-              'ARCHIVING…',
+              'FORGING RECORD…',
               style: GoogleFonts.ibmPlexMono(
-                color: kPrimaryText,
+                color: kAccent,
                 fontSize: 12.sp,
                 fontWeight: FontWeight.w700,
+                letterSpacing: 1.5,
               ),
             ),
             SizedBox(height: 4.h),
             Text(
-              'Indexing thermal record',
+              'Tempering thermal data',
               style: GoogleFonts.ibmPlexSans(
-                  color: kSecondaryText, fontSize: 13.sp),
+                color: kSecondaryText,
+                fontSize: 12.sp,
+              ),
             ),
           ],
         ),
       ),
     );
   }
+}
+
+class _ForgeHeartPainter extends CustomPainter {
+  final double progress;
+  _ForgeHeartPainter({required this.progress});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cx = size.width / 2;
+    final cy = size.height / 2;
+    final r = size.shortestSide / 2;
+
+    // Outer heat rings
+    for (int i = 0; i < 6; i++) {
+      final phase = (progress + i / 6) % 1.0;
+      final ringR = r * (0.3 + phase * 0.7);
+      final alpha = ((1.0 - phase) * 60).round().clamp(0, 60);
+      final paint = Paint()
+        ..color = kAccent.withAlpha(alpha)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5 + (1.0 - phase) * 3;
+      canvas.drawCircle(Offset(cx, cy), ringR, paint);
+    }
+
+    // Core glow
+    final corePaint = Paint()
+      ..shader = ui.Gradient.radial(
+        Offset(cx, cy),
+        r * 0.5,
+        [
+          kAccent.withAlpha((80 + (progress * 60).round()).clamp(0, 140)),
+          kAccent.withAlpha(0),
+        ],
+        [0.0, 1.0],
+      );
+    canvas.drawCircle(Offset(cx, cy), r * 0.5, corePaint);
+
+    // Center mark
+    final centerPaint = Paint()
+      ..color = kAccent.withAlpha((120 + (progress * 60).round()).clamp(0, 180))
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(Offset(cx, cy), 3, centerPaint);
+  }
+
+  @override
+  bool shouldRepaint(_ForgeHeartPainter old) => old.progress != progress;
 }
