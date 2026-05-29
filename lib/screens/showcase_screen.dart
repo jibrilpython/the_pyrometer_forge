@@ -484,7 +484,7 @@ class _ShowcaseScreenState extends ConsumerState<ShowcaseScreen>
     setState(() {
       _focusItem = item;
       _focusIndex = idx;
-      _rheostatValue = 0.0;
+      _rheostatValue = (item.maxTemperature / 2000.0).clamp(0.0, 1.0);
       _colorMatched = false;
       _focusPanelSlide = 0.0;
     });

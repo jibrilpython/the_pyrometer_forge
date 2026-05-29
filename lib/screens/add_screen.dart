@@ -33,6 +33,8 @@ class _AddScreenState extends ConsumerState<AddScreen> {
   late TextEditingController _impedanceCtrl;
   late TextEditingController _enclosureCtrl;
   late TextEditingController _massCtrl;
+  late TextEditingController _minTempCtrl;
+  late TextEditingController _maxTempCtrl;
   late TextEditingController _provenanceCustomCtrl;
   late TextEditingController _notesCtrl;
   late TextEditingController _tagsCtrl;
@@ -58,6 +60,10 @@ class _AddScreenState extends ConsumerState<AddScreen> {
     _impedanceCtrl = TextEditingController(text: p.auxiliaryPowerImpedance);
     _enclosureCtrl = TextEditingController(text: p.enclosureVolumetrics);
     _massCtrl = TextEditingController(text: p.mass);
+    _minTempCtrl = TextEditingController(
+        text: widget.isEdit ? p.minTemperature.toString() : '');
+    _maxTempCtrl = TextEditingController(
+        text: widget.isEdit ? p.maxTemperature.toString() : '');
     _provenanceCustomCtrl =
         TextEditingController(text: p.foundryProvenanceCustom);
     _notesCtrl = TextEditingController(text: p.notes);
@@ -70,6 +76,8 @@ class _AddScreenState extends ConsumerState<AddScreen> {
     for (final c in [
       _hashCtrl,
       _makerCustomCtrl,
+      _minTempCtrl,
+      _maxTempCtrl,
       _wavebandCtrl,
       _expansionCtrl,
       _deformationCtrl,
@@ -311,7 +319,8 @@ class _AddScreenState extends ConsumerState<AddScreen> {
             children: [
               Expanded(
                 child: _tempInput(
-                  value: p.minTemperature,
+                  ctrl: _minTempCtrl,
+                  hint: 'e.g. 0',
                   onChanged: (v) => p.minTemperature = v,
                 ),
               ),
@@ -322,7 +331,8 @@ class _AddScreenState extends ConsumerState<AddScreen> {
               ),
               Expanded(
                 child: _tempInput(
-                  value: p.maxTemperature,
+                  ctrl: _maxTempCtrl,
+                  hint: 'e.g. 500',
                   onChanged: (v) => p.maxTemperature = v,
                 ),
               ),
@@ -722,18 +732,20 @@ class _AddScreenState extends ConsumerState<AddScreen> {
   }
 
   Widget _tempInput({
-    required int value,
+    required TextEditingController ctrl,
     required Function(int) onChanged,
+    String? hint,
   }) {
     return TextField(
+      controller: ctrl,
       keyboardType: TextInputType.number,
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-      decoration: InputDecoration(hintText: value.toString()),
       style: GoogleFonts.ibmPlexMono(
         color: kPrimaryText,
         fontSize: 16.sp,
         fontWeight: FontWeight.w600,
       ),
+      decoration: InputDecoration(hintText: hint),
       onChanged: (v) {
         final parsed = int.tryParse(v);
         if (parsed != null) onChanged(parsed);
